@@ -13,7 +13,22 @@ export default function Home() {
           priority
         />
         <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
+          <p>eeew jacoo 🤮</p>
+          <Image 
+            src="/images/jaceew.png"
+            alt= "ew car"
+          width={750}
+          height={600}
+            />
+          <p>gooo miata 🤤</p>
+          <Image 
+            src="/images/mx5_grey.jpg"
+            alt= "ew car"
+            width={600}
+            height={250}
+            />
+
+          {/* <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
             To get started, edit the{" "}
             <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
               page.tsx
@@ -36,7 +51,7 @@ export default function Home() {
               Learning
             </a>{" "}
             center.
-          </p>
+          </p> */}
         </div>
         <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
           <a
