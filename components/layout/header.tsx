@@ -11,8 +11,14 @@ export async function Header() {
         No Boring Cars
       </Link>
       <nav className="flex items-center gap-4 text-sm">
+        <Link href="/auctions" className="hover:underline">
+          Auctions
+        </Link>
         {user ? (
           <>
+            <Link href="/sell" className="hover:underline">
+              Sell
+            </Link>
             <Link href="/account" className="hover:underline">
               {profile?.has_chosen_username
                 ? `@${profile.username}`

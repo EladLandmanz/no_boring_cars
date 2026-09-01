@@ -40,7 +40,7 @@ export async function updateSession(request: NextRequest) {
     path.startsWith("/signup") ||
     path.startsWith("/auth");
 
-  if (!user && path.startsWith("/account")) {
+  if (!user && (path.startsWith("/account") || path.startsWith("/sell"))) {
     const login = request.nextUrl.clone();
     login.pathname = "/login";
     login.searchParams.set("next", path);
