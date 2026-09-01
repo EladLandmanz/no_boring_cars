@@ -13,3 +13,12 @@ export function currentPriceAgorot(
 ) {
   return highBidAgorot ?? startingBidAgorot;
 }
+
+export function minNextBidAgorot(
+  startingBidAgorot: number,
+  highBidAgorot: number | null,
+  incrementAgorot: number,
+) {
+  if (highBidAgorot == null) return startingBidAgorot;
+  return highBidAgorot + incrementAgorot;
+}

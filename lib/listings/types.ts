@@ -47,6 +47,7 @@ export type ListingDetail = ListingCardData & {
   bid_increment_agorot: number;
   reserve_agorot: number | null;
   seller: { username: string; display_name: string | null } | null;
+  seller_id: string;
   listing_modifications: {
     id: string;
     category: string;

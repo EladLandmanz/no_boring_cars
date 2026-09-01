@@ -262,6 +262,7 @@ export async function getListingBySlug(
     starts_at: data.starts_at,
     sold_price_agorot: data.sold_price_agorot,
     high_bid_agorot: highBidFromRows(bids),
+    seller_id: data.seller_id,
     seller: seller
       ? { username: seller.username, display_name: seller.display_name }
       : null,

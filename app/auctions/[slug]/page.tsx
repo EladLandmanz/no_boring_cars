@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BidPanel } from "@/components/auctions/bid-panel";
 import { ListingGallery } from "@/components/auctions/listing-gallery";
+import { getAuthContext } from "@/lib/auth/session";
 import { getListingBySlug } from "@/lib/listings/queries";
-import { currentPriceAgorot, formatIls } from "@/lib/money";
+import { currentPriceAgorot, formatIls, minNextBidAgorot } from "@/lib/money";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -31,6 +33,7 @@ export default async function AuctionPage({ params }: Props) {
     notFound();
   }
 
+  const { user } = await getAuthContext();
   const price =
     listing.status === "sold" && listing.sold_price_agorot != null
       ? listing.sold_price_agorot
@@ -80,9 +83,20 @@ export default async function AuctionPage({ params }: Props) {
             Ends {new Date(listing.ends_at).toLocaleString("en-IL")}
           </p>
         ) : null}
-        <p className="mt-4 text-sm text-zinc-400">
-          Bidding is disabled until the next phase.
-        </p>
+        <BidPanel
+          listingId={listing.id}
+          slug={listing.slug}
+          status={listing.status}
+          minNextAgorot={minNextBidAgorot(
+            listing.starting_bid_agorot,
+            listing.high_bid_agorot,
+            listing.bid_increment_agorot,
+          )}
+          endsAt={listing.ends_at}
+          startsAt={listing.starts_at}
+          isOwner={user?.id === listing.seller_id}
+          isLoggedIn={Boolean(user)}
+        />
       </section>
 
       <section>

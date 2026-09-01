@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { deleteDraftListing, updateDraftListing } from "@/actions/listings";
 import { ListingForm } from "@/components/sell/listing-form";
 import { ListingPhotos } from "@/components/sell/listing-photos";
+import { PublishButton } from "@/components/sell/publish-button";
 import { getEditableListing, listListingImages } from "@/lib/listings/queries";
 
 export default async function EditListingPage({
@@ -45,6 +46,13 @@ export default async function EditListingPage({
         images={images}
         editable={editable}
       />
+
+      {editable ? (
+        <PublishButton
+          listingId={listing.id}
+          canPublish={Boolean(listing.starts_at && listing.ends_at)}
+        />
+      ) : null}
 
       {editable ? (
         <ListingForm

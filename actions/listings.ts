@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getAuthContext } from "@/lib/auth/session";
 import { parseListingForm } from "@/lib/listings/parse-form";
 import { listingImageExt } from "@/lib/listings/storage";
+import { mapNbcError } from "@/lib/supabase/errors";
 
 export type ListingFormState = { error: string } | null;
 
@@ -77,6 +78,47 @@ export async function updateDraftListing(
   revalidatePath(`/sell/${id}`);
   revalidatePath(`/auctions/${parsed.row.slug}`);
   return null;
+}
+
+export async function publishListing(
+  _prev: ListingFormState,
+  formData: FormData,
+): Promise<ListingFormState> {
+  const { supabase } = await requireSeller();
+  const id = String(formData.get("id") ?? "");
+  if (!id) {
+    return { error: "Missing listing id." };
+  }
+
+  const { error } = await supabase.rpc("publish_listing", {
+    p_listing_id: id,
+  });
+
+  if (error) {
+    if (error.message.toLowerCase().includes("does not exist")) {
+      return {
+        error:
+          "Run supabase/migrations/20260901120000_publish_listing.sql in the SQL Editor first.",
+      };
+    }
+    const hint = "hint" in error ? String(error.hint ?? "") : null;
+    return { error: mapNbcError(error.message, hint) };
+  }
+
+  const { data: listing } = await supabase
+    .from("listings")
+    .select("slug")
+    .eq("id", id)
+    .maybeSingle();
+
+  revalidatePath("/account");
+  revalidatePath("/");
+  revalidatePath("/auctions");
+  if (listing?.slug) {
+    revalidatePath(`/auctions/${listing.slug}`);
+  }
+  revalidatePath(`/sell/${id}`);
+  redirect(`/auctions/${listing?.slug ?? ""}`);
 }
 
 export async function deleteDraftListing(formData: FormData) {
