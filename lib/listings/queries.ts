@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { searchTokens } from "@/lib/listings/search";
 import { signedUrlsForPaths } from "@/lib/listings/storage";
 import type {
   ListingCardData,
@@ -82,12 +83,38 @@ export async function listListingImages(
   }));
 }
 
-export async function listPublicListings(): Promise<ListingCardData[]> {
+function applySearchFilter<
+  T extends { or: (filters: string) => T },
+>(query: T, raw: string | undefined): T {
+  const tokens = searchTokens(raw);
+  let next = query;
+  for (const token of tokens) {
+    const like = `"%${token}%"`;
+    const parts = [
+      `headline.ilike.${like}`,
+      `make.ilike.${like}`,
+      `model.ilike.${like}`,
+      `trim.ilike.${like}`,
+      `location_city.ilike.${like}`,
+      `location_region.ilike.${like}`,
+    ];
+    if (/^\d{2,4}$/.test(token)) {
+      parts.push(`year.eq.${Number(token)}`);
+    }
+    next = next.or(parts.join(","));
+  }
+  return next;
+}
+
+export async function listPublicListings(
+  query?: string,
+): Promise<ListingCardData[]> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("listings")
-    .select(
-      `
+  const { data, error } = await applySearchFilter(
+    supabase
+      .from("listings")
+      .select(
+        `
       id,
       slug,
       headline,
@@ -104,9 +131,10 @@ export async function listPublicListings(): Promise<ListingCardData[]> {
       sold_price_agorot,
       bids ( amount_agorot )
     `,
-    )
-    .in("status", ["upcoming", "live", "sold", "reserve_not_met", "unsold"])
-    .order("ends_at", { ascending: true, nullsFirst: false });
+      )
+      .in("status", ["upcoming", "live", "sold", "reserve_not_met", "unsold"]),
+    query,
+  ).order("ends_at", { ascending: true, nullsFirst: false });
 
   if (error) {
     throw new Error(error.message);
