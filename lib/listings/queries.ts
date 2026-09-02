@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { searchTokens } from "@/lib/listings/search";
+import { searchTokens, type BrowseFilters } from "@/lib/listings/search";
 import { signedUrlsForPaths } from "@/lib/listings/storage";
 import type {
   ListingCardData,
@@ -106,15 +106,45 @@ function applySearchFilter<
   return next;
 }
 
-export async function listPublicListings(
-  query?: string,
-): Promise<ListingCardData[]> {
+const PUBLIC_STATUSES = [
+  "upcoming",
+  "live",
+  "sold",
+  "reserve_not_met",
+  "unsold",
+] as const;
+
+export async function listPublicMakes(): Promise<string[]> {
   const supabase = await createClient();
-  const { data, error } = await applySearchFilter(
-    supabase
-      .from("listings")
-      .select(
-        `
+  const { data, error } = await supabase
+    .from("listings")
+    .select("make")
+    .in("status", [...PUBLIC_STATUSES]);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return [...new Set((data ?? []).map((row) => row.make))].sort((a, b) =>
+    a.localeCompare(b),
+  );
+}
+
+export async function listPublicListings(
+  filters: Partial<BrowseFilters> = {},
+): Promise<ListingCardData[]> {
+  const parsed: BrowseFilters = {
+    query: filters.query ?? "",
+    status: filters.status,
+    make: filters.make,
+    track: filters.track,
+  };
+
+  const supabase = await createClient();
+  let request = supabase
+    .from("listings")
+    .select(
+      `
       id,
       slug,
       headline,
@@ -131,10 +161,27 @@ export async function listPublicListings(
       sold_price_agorot,
       bids ( amount_agorot )
     `,
-      )
-      .in("status", ["upcoming", "live", "sold", "reserve_not_met", "unsold"]),
-    query,
-  ).order("ends_at", { ascending: true, nullsFirst: false });
+    );
+
+  if (parsed.status === "live" || parsed.status === "upcoming") {
+    request = request.eq("status", parsed.status);
+  } else if (parsed.status === "ended") {
+    request = request.in("status", ["sold", "reserve_not_met", "unsold"]);
+  } else {
+    request = request.in("status", [...PUBLIC_STATUSES]);
+  }
+
+  if (parsed.make) {
+    request = request.ilike("make", parsed.make);
+  }
+  if (parsed.track) {
+    request = request.eq("track_use", true);
+  }
+
+  const { data, error } = await applySearchFilter(request, parsed.query).order(
+    "ends_at",
+    { ascending: true, nullsFirst: false },
+  );
 
   if (error) {
     throw new Error(error.message);

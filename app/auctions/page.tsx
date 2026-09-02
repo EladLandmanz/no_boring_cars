@@ -1,19 +1,29 @@
 import { Suspense } from "react";
+import { BrowseFiltersBar } from "@/components/auctions/browse-filters";
 import { ListingCard } from "@/components/auctions/listing-card";
 import { SearchFallback } from "@/components/auctions/search-fallback";
 import { Search } from "@/components/auctions/search";
-import { listPublicListings } from "@/lib/listings/queries";
-import { firstSearchParam } from "@/lib/listings/search";
+import {
+  listPublicListings,
+  listPublicMakes,
+} from "@/lib/listings/queries";
+import {
+  browseCacheKey,
+  parseBrowseFilters,
+  type AuctionSearchParams,
+  type BrowseFilters,
+} from "@/lib/listings/search";
 
-async function AuctionResults({ query }: { query: string }) {
-  const listings = await listPublicListings(query);
+async function AuctionResults({ filters }: { filters: BrowseFilters }) {
+  const listings = await listPublicListings(filters);
+  const filtered = Boolean(
+    filters.query || filters.status || filters.make || filters.track,
+  );
 
   if (listings.length === 0) {
     return (
       <p className="text-sm text-zinc-500">
-        {query
-          ? `No auctions match “${query}”.`
-          : "Nothing public yet."}
+        {filtered ? "No auctions match those filters." : "Nothing public yet."}
       </p>
     );
   }
@@ -43,10 +53,10 @@ function ResultsFallback() {
 export default async function AuctionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ query?: string | string[] }>;
+  searchParams: Promise<AuctionSearchParams>;
 }) {
-  const params = await searchParams;
-  const query = firstSearchParam(params.query).trim();
+  const filters = parseBrowseFilters(await searchParams);
+  const makes = await listPublicMakes();
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 py-12">
@@ -56,8 +66,11 @@ export default async function AuctionsPage({
           <Search placeholder="Search make, model, city…" />
         </Suspense>
       </div>
-      <Suspense key={query} fallback={<ResultsFallback />}>
-        <AuctionResults query={query} />
+      <Suspense fallback={null}>
+        <BrowseFiltersBar filters={filters} makes={makes} />
+      </Suspense>
+      <Suspense key={browseCacheKey(filters)} fallback={<ResultsFallback />}>
+        <AuctionResults filters={filters} />
       </Suspense>
     </div>
   );
