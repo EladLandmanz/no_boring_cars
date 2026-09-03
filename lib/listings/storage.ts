@@ -26,9 +26,28 @@ export async function signedUrlsForPaths(
   return map;
 }
 
-export function listingImageExt(mime: string) {
-  if (mime === "image/jpeg") return "jpg";
-  if (mime === "image/png") return "png";
-  if (mime === "image/webp") return "webp";
+export type ListingPhotoFile = Blob & { name?: string; type: string };
+
+/** FormData files in Server Actions are not always `instanceof File`. */
+export function asListingPhotoFile(value: unknown): ListingPhotoFile | null {
+  if (typeof value !== "object" || value === null) return null;
+  const blob = value as Blob & { name?: string; type: string };
+  if (typeof blob.size !== "number" || blob.size <= 0) return null;
+  if (typeof blob.arrayBuffer !== "function") return null;
+  return blob;
+}
+
+export function listingImageExt(mime: string, filename = "") {
+  const type = mime.toLowerCase().split(";")[0].trim();
+  if (type === "image/jpeg" || type === "image/jpg" || type === "image/pjpeg") {
+    return "jpg";
+  }
+  if (type === "image/png") return "png";
+  if (type === "image/webp") return "webp";
+
+  const name = filename.toLowerCase();
+  if (name.endsWith(".jpg") || name.endsWith(".jpeg")) return "jpg";
+  if (name.endsWith(".png")) return "png";
+  if (name.endsWith(".webp")) return "webp";
   return null;
 }

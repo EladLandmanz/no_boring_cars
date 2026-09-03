@@ -363,6 +363,23 @@ export function ListingForm({
         </div>
       </section>
 
+      {!listing ? (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-lg font-semibold">Photos</h2>
+          <p className="text-sm text-zinc-500">
+            Optional. JPEG, PNG, or WebP, up to 10 MB each. You can add more
+            after the draft is created.
+          </p>
+          <input
+            className="text-sm"
+            type="file"
+            name="photos"
+            accept="image/jpeg,image/png,image/webp"
+            multiple
+          />
+        </section>
+      ) : null}
+
       {state?.error ? (
         <p className="text-sm text-red-600" role="alert">
           {state.error}

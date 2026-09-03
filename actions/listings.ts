@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAuthContext } from "@/lib/auth/session";
 import { parseListingForm } from "@/lib/listings/parse-form";
-import { listingImageExt } from "@/lib/listings/storage";
+import {
+  asListingPhotoFile,
+  listingImageExt,
+  type ListingPhotoFile,
+} from "@/lib/listings/storage";
 import { mapNbcError } from "@/lib/supabase/errors";
 
 export type ListingFormState = { error: string } | null;
@@ -20,6 +24,74 @@ async function requireSeller() {
   return ctx;
 }
 
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+const MAX_CREATE_PHOTOS = 12;
+
+type SellerClient = Awaited<ReturnType<typeof requireSeller>>["supabase"];
+
+function listingPhotoFiles(formData: FormData) {
+  return formData.getAll("photos").flatMap((value) => {
+    const file = asListingPhotoFile(value);
+    return file ? [file] : [];
+  });
+}
+
+function validateListingPhoto(file: ListingPhotoFile) {
+  if (file.size > MAX_IMAGE_BYTES) {
+    return "Each image must be 10 MB or smaller.";
+  }
+  if (!listingImageExt(file.type, file.name ?? "")) {
+    return "Use JPEG, PNG, or WebP.";
+  }
+  return null;
+}
+
+async function storeListingPhoto(
+  supabase: SellerClient,
+  listing: { id: string; slug: string },
+  file: ListingPhotoFile,
+  sortOrder: number,
+  isCover: boolean,
+) {
+  const ext = listingImageExt(file.type, file.name ?? "");
+  if (!ext) {
+    return "Use JPEG, PNG, or WebP.";
+  }
+
+  const path = `${listing.id}/${crypto.randomUUID()}.${ext}`;
+  const bytes = Buffer.from(await file.arrayBuffer());
+  const contentType =
+    file.type && file.type !== "application/octet-stream"
+      ? file.type
+      : ext === "png"
+        ? "image/png"
+        : ext === "webp"
+          ? "image/webp"
+          : "image/jpeg";
+  const { error: uploadError } = await supabase.storage
+    .from("listing-images")
+    .upload(path, bytes, { contentType, upsert: false });
+
+  if (uploadError) {
+    return uploadError.message;
+  }
+
+  const { error: rowError } = await supabase.from("listing_images").insert({
+    listing_id: listing.id,
+    storage_path: path,
+    alt: listing.slug,
+    sort_order: sortOrder,
+    is_cover: isCover,
+  });
+
+  if (rowError) {
+    await supabase.storage.from("listing-images").remove([path]);
+    return rowError.message;
+  }
+
+  return null;
+}
+
 export async function createDraftListing(
   _prev: ListingFormState,
   formData: FormData,
@@ -30,20 +102,73 @@ export async function createDraftListing(
     return { error: parsed.error };
   }
 
-  const { error } = await supabase
+  const photos = listingPhotoFiles(formData);
+  const rawPhotoCount = formData.getAll("photos").length;
+  if (rawPhotoCount > 0 && photos.length === 0) {
+    const first = formData.get("photos");
+    const looksEmpty =
+      typeof first === "object" &&
+      first !== null &&
+      "size" in first &&
+      (first as { size: number }).size === 0;
+    if (!looksEmpty) {
+      return {
+        error:
+          "The selected photos could not be read. Use JPEG, PNG, or WebP.",
+      };
+    }
+  }
+  if (photos.length > MAX_CREATE_PHOTOS) {
+    return { error: `You can attach up to ${MAX_CREATE_PHOTOS} photos here.` };
+  }
+  for (const photo of photos) {
+    const invalid = validateListingPhoto(photo);
+    if (invalid) {
+      return { error: invalid };
+    }
+  }
+
+  const { data: listing, error } = await supabase
     .from("listings")
     .insert({
       ...parsed.row,
       seller_id: user.id,
       status: "draft",
-    });
+    })
+    .select("id, slug")
+    .single();
 
-  if (error) {
-    return { error: error.message };
+  if (error || !listing) {
+    return { error: error?.message ?? "Could not create draft." };
+  }
+
+  let sortOrder = 0;
+  let hasCover = false;
+  let lastPhotoError: string | null = null;
+  for (const photo of photos) {
+    const photoError = await storeListingPhoto(
+      supabase,
+      listing,
+      photo,
+      sortOrder,
+      !hasCover,
+    );
+    if (photoError) {
+      lastPhotoError = photoError;
+      continue;
+    }
+    hasCover = true;
+    sortOrder += 1;
   }
 
   revalidatePath("/account");
-  redirect("/account");
+  revalidatePath(`/sell/${listing.id}`);
+  if (photos.length > 0 && !hasCover && lastPhotoError) {
+    redirect(
+      `/sell/${listing.id}?photos=failed&reason=${encodeURIComponent(lastPhotoError)}`,
+    );
+  }
+  redirect(`/sell/${listing.id}`);
 }
 
 export async function updateDraftListing(
@@ -139,28 +264,23 @@ export async function deleteDraftListing(formData: FormData) {
   redirect("/account");
 }
 
-const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
-
 export async function uploadListingImage(
   _prev: ListingFormState,
   formData: FormData,
 ): Promise<ListingFormState> {
   const { user, supabase } = await requireSeller();
   const listingId = String(formData.get("listing_id") ?? "");
-  const file = formData.get("file");
+  const file = asListingPhotoFile(formData.get("file"));
 
   if (!listingId) {
     return { error: "Missing listing." };
   }
-  if (!(file instanceof File) || file.size === 0) {
+  if (!file) {
     return { error: "Choose a JPEG, PNG, or WebP image." };
   }
-  if (file.size > MAX_IMAGE_BYTES) {
-    return { error: "Image must be 10 MB or smaller." };
-  }
-  const ext = listingImageExt(file.type);
-  if (!ext) {
-    return { error: "Use JPEG, PNG, or WebP." };
+  const invalid = validateListingPhoto(file);
+  if (invalid) {
+    return { error: invalid };
   }
 
   const { data: listing } = await supabase
@@ -179,26 +299,15 @@ export async function uploadListingImage(
     .select("id", { count: "exact", head: true })
     .eq("listing_id", listingId);
 
-  const path = `${listingId}/${crypto.randomUUID()}.${ext}`;
-  const { error: uploadError } = await supabase.storage
-    .from("listing-images")
-    .upload(path, file, { contentType: file.type, upsert: false });
-
-  if (uploadError) {
-    return { error: uploadError.message };
-  }
-
-  const { error: rowError } = await supabase.from("listing_images").insert({
-    listing_id: listingId,
-    storage_path: path,
-    alt: listing.slug,
-    sort_order: count ?? 0,
-    is_cover: (count ?? 0) === 0,
-  });
-
-  if (rowError) {
-    await supabase.storage.from("listing-images").remove([path]);
-    return { error: rowError.message };
+  const photoError = await storeListingPhoto(
+    supabase,
+    listing,
+    file,
+    count ?? 0,
+    (count ?? 0) === 0,
+  );
+  if (photoError) {
+    return { error: photoError };
   }
 
   revalidatePath(`/sell/${listingId}`);

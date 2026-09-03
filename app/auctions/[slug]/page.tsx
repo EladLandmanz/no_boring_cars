@@ -3,8 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BidPanel } from "@/components/auctions/bid-panel";
 import { ListingGallery } from "@/components/auctions/listing-gallery";
+import { WatchButton } from "@/components/auctions/watch-button";
 import { getAuthContext } from "@/lib/auth/session";
-import { getListingBySlug } from "@/lib/listings/queries";
+import { getListingBySlug, isListingWatched } from "@/lib/listings/queries";
 import { currentPriceAgorot, formatIls, minNextBidAgorot } from "@/lib/money";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -34,6 +35,8 @@ export default async function AuctionPage({ params }: Props) {
   }
 
   const { user } = await getAuthContext();
+  const watching = user ? await isListingWatched(listing.id) : false;
+  const isOwner = user?.id === listing.seller_id;
   const price =
     listing.status === "sold" && listing.sold_price_agorot != null
       ? listing.sold_price_agorot
@@ -64,6 +67,13 @@ export default async function AuctionPage({ params }: Props) {
           {listing.location_city}, {listing.location_region} · listed by @
           {listing.seller?.username ?? "seller"}
         </p>
+        {isOwner ? null : (
+          <WatchButton
+            listingId={listing.id}
+            slug={listing.slug}
+            watching={watching}
+          />
+        )}
       </header>
 
       <section className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
@@ -94,7 +104,7 @@ export default async function AuctionPage({ params }: Props) {
           )}
           endsAt={listing.ends_at}
           startsAt={listing.starts_at}
-          isOwner={user?.id === listing.seller_id}
+          isOwner={isOwner}
           isLoggedIn={Boolean(user)}
         />
       </section>

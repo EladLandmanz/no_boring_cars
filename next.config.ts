@@ -13,6 +13,12 @@ function supabaseHostname() {
 const supabaseHost = supabaseHostname();
 
 const nextConfig: NextConfig = {
+  // Default Server Action body is 1 MB; listing photos are allowed up to 10 MB.
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "12mb",
+    },
+  },
   images: {
     remotePatterns: supabaseHost
       ? [

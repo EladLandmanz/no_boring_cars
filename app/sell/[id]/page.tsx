@@ -8,10 +8,13 @@ import { getEditableListing, listListingImages } from "@/lib/listings/queries";
 
 export default async function EditListingPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ photos?: string; reason?: string }>;
 }) {
   const { id } = await params;
+  const photoQuery = await searchParams;
   const listing = await getEditableListing(id);
   if (!listing) {
     notFound();
@@ -39,6 +42,14 @@ export default async function EditListingPage({
           </Link>{" "}
           (visible to you while it is a draft; guests will 404)
         </p>
+        {photoQuery.photos === "failed" ? (
+          <p className="text-sm text-red-600" role="alert">
+            The draft was saved, but photos did not upload
+            {photoQuery.reason ? `: ${photoQuery.reason}` : "."} Try again
+            below. If this mentions the bucket or row-level security, run
+            supabase/migrations in the SQL Editor.
+          </p>
+        ) : null}
       </div>
 
       <ListingPhotos

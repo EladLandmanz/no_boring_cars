@@ -16,6 +16,9 @@ export async function Header() {
         </Link>
         {user ? (
           <>
+            <Link href="/account#watchlist" className="hover:underline">
+              Watchlist
+            </Link>
             <Link href="/sell" className="hover:underline">
               Sell
             </Link>

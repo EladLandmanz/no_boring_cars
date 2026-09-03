@@ -390,6 +390,82 @@ export async function listMyListings(): Promise<ListingCardData[]> {
   );
 }
 
+export async function isListingWatched(listingId: string): Promise<boolean> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { data, error } = await supabase
+    .from("watches")
+    .select("listing_id")
+    .eq("user_id", user.id)
+    .eq("listing_id", listingId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  return Boolean(data);
+}
+
+export async function listWatchedListings(): Promise<ListingCardData[]> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from("watches")
+    .select(
+      `
+      created_at,
+      listings (
+        id,
+        slug,
+        headline,
+        year,
+        make,
+        model,
+        status,
+        mileage,
+        location_city,
+        location_region,
+        starting_bid_agorot,
+        ends_at,
+        starts_at,
+        sold_price_agorot,
+        bids ( amount_agorot )
+      )
+    `,
+    )
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const rows = (data ?? [])
+    .map((row) => {
+      const listing = Array.isArray(row.listings)
+        ? row.listings[0]
+        : row.listings;
+      return listing;
+    })
+    .filter((listing): listing is NonNullable<typeof listing> =>
+      Boolean(listing),
+    )
+    .map((listing) => ({
+      ...listing,
+      high_bid_agorot: highBidFromRows(listing.bids),
+    }));
+
+  return attachCoverUrls(rows);
+}
+
 export async function getEditableListing(id: string) {
   const supabase = await createClient();
   const {
