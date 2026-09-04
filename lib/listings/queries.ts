@@ -390,6 +390,30 @@ export async function listMyListings(): Promise<ListingCardData[]> {
   );
 }
 
+export type AdminListingRow = {
+  id: string;
+  slug: string;
+  headline: string;
+  status: string;
+  year: number;
+  make: string;
+  model: string;
+  created_at: string;
+};
+
+export async function listAdminListings(): Promise<AdminListingRow[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("listings")
+    .select("id, slug, headline, status, year, make, model, created_at")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  return data ?? [];
+}
+
 export async function isListingWatched(listingId: string): Promise<boolean> {
   const supabase = await createClient();
   const {

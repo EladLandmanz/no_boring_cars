@@ -27,6 +27,11 @@ export async function Header() {
                 ? `@${profile.username}`
                 : "Complete profile"}
             </Link>
+            {profile?.role === "admin" ? (
+              <Link href="/admin" className="hover:underline">
+                Admin
+              </Link>
+            ) : null}
             <form action={signOut}>
               <button type="submit" className="hover:underline">
                 Log out
