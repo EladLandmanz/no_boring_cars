@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BidPanel } from "@/components/auctions/bid-panel";
 import { ListingGallery } from "@/components/auctions/listing-gallery";
+import { ListingRealtime } from "@/components/auctions/listing-realtime";
 import { WatchButton } from "@/components/auctions/watch-button";
 import { getAuthContext } from "@/lib/auth/session";
 import { getListingBySlug, isListingWatched } from "@/lib/listings/queries";
@@ -76,6 +77,11 @@ export default async function AuctionPage({ params }: Props) {
         )}
       </header>
 
+      <ListingRealtime
+        listingId={listing.id}
+        enabled={listing.status === "live" || listing.status === "upcoming"}
+      />
+
       <section className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
         <p className="text-sm text-zinc-500">
           {listing.status === "sold" ? "Sold for" : "Current price"}
@@ -94,6 +100,7 @@ export default async function AuctionPage({ params }: Props) {
           </p>
         ) : null}
         <BidPanel
+          key={`${listing.high_bid_agorot ?? 0}-${listing.ends_at ?? ""}`}
           listingId={listing.id}
           slug={listing.slug}
           status={listing.status}
