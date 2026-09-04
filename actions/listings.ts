@@ -205,7 +205,7 @@ export async function updateDraftListing(
   return null;
 }
 
-export async function publishListing(
+export async function submitListingForReview(
   _prev: ListingFormState,
   formData: FormData,
 ): Promise<ListingFormState> {
@@ -215,7 +215,7 @@ export async function publishListing(
     return { error: "Missing listing id." };
   }
 
-  const { error } = await supabase.rpc("publish_listing", {
+  const { error } = await supabase.rpc("submit_listing_for_review", {
     p_listing_id: id,
   });
 
@@ -223,27 +223,41 @@ export async function publishListing(
     if (error.message.toLowerCase().includes("does not exist")) {
       return {
         error:
-          "Run supabase/migrations/20260901120000_publish_listing.sql in the SQL Editor first.",
+          "Run supabase/migrations/20260904133000_listing_review.sql in the SQL Editor first.",
       };
     }
     const hint = "hint" in error ? String(error.hint ?? "") : null;
     return { error: mapNbcError(error.message, hint) };
   }
 
-  const { data: listing } = await supabase
+  revalidatePath("/account");
+  revalidatePath("/admin");
+  revalidatePath(`/sell/${id}`);
+  return null;
+}
+
+export async function withdrawListingFromReview(formData: FormData) {
+  const { user, supabase } = await requireSeller();
+  const id = String(formData.get("id") ?? "");
+  if (!id) {
+    redirect("/account");
+  }
+
+  const { error } = await supabase
     .from("listings")
-    .select("slug")
+    .update({ status: "draft" })
     .eq("id", id)
-    .maybeSingle();
+    .eq("seller_id", user.id)
+    .eq("status", "pending_review");
+
+  if (error) {
+    throw new Error(error.message);
+  }
 
   revalidatePath("/account");
-  revalidatePath("/");
-  revalidatePath("/auctions");
-  if (listing?.slug) {
-    revalidatePath(`/auctions/${listing.slug}`);
-  }
+  revalidatePath("/admin");
   revalidatePath(`/sell/${id}`);
-  redirect(`/auctions/${listing?.slug ?? ""}`);
+  redirect(`/sell/${id}`);
 }
 
 export async function deleteDraftListing(formData: FormData) {

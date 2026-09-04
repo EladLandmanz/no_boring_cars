@@ -1,23 +1,48 @@
 "use client";
 
 import { useActionState } from "react";
-import { publishListing } from "@/actions/listings";
+import {
+  submitListingForReview,
+  withdrawListingFromReview,
+} from "@/actions/listings";
 
-export function PublishButton({
+export function SubmitForReviewButton({
   listingId,
-  canPublish,
+  status,
+  canSubmit,
 }: {
   listingId: string;
-  canPublish: boolean;
+  status: string;
+  canSubmit: boolean;
 }) {
-  const [state, formAction, pending] = useActionState(publishListing, null);
+  const [state, formAction, pending] = useActionState(
+    submitListingForReview,
+    null,
+  );
 
-  if (!canPublish) {
+  if (status === "pending_review") {
+    return (
+      <div className="flex flex-col gap-3">
+        <p className="text-sm text-zinc-500">
+          This listing is waiting for admin approval. You can keep editing, or
+          withdraw it back to a draft.
+        </p>
+        <form action={withdrawListingFromReview}>
+          <input type="hidden" name="id" value={listingId} />
+          <button type="submit" className="text-sm underline">
+            Withdraw from review
+          </button>
+        </form>
+      </div>
+    );
+  }
+
+  if (!canSubmit) {
     return (
       <p className="text-sm text-zinc-500">
-        Save start and end times on the draft before you can publish. If start
-        is in the future the listing becomes <strong>upcoming</strong>;
-        otherwise it goes <strong>live</strong>.
+        Add at least one photo and save start and end times before submitting
+        for review. After an admin approves, a future start time becomes{" "}
+        <strong>upcoming</strong>; otherwise it goes <strong>live</strong>.
       </p>
     );
   }
@@ -35,7 +60,7 @@ export function PublishButton({
         disabled={pending}
         className="w-fit rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
       >
-        {pending ? "Publishing…" : "Publish auction"}
+        {pending ? "Submitting…" : "Submit for review"}
       </button>
     </form>
   );

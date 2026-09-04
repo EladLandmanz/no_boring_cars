@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { deleteDraftListing, updateDraftListing } from "@/actions/listings";
 import { ListingForm } from "@/components/sell/listing-form";
 import { ListingPhotos } from "@/components/sell/listing-photos";
-import { PublishButton } from "@/components/sell/publish-button";
+import { SubmitForReviewButton } from "@/components/sell/publish-button";
 import { getEditableListing, listListingImages } from "@/lib/listings/queries";
 
 export default async function EditListingPage({
@@ -59,9 +59,12 @@ export default async function EditListingPage({
       />
 
       {editable ? (
-        <PublishButton
+        <SubmitForReviewButton
           listingId={listing.id}
-          canPublish={Boolean(listing.starts_at && listing.ends_at)}
+          status={listing.status}
+          canSubmit={
+            Boolean(listing.starts_at && listing.ends_at) && images.length > 0
+          }
         />
       ) : null}
 

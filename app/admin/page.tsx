@@ -1,21 +1,41 @@
 import Link from "next/link";
 import { cancelListing } from "@/actions/admin";
 import { ConfirmSubmit } from "@/components/admin/confirm-submit";
+import { AdminReviewActions } from "@/components/admin/review-actions";
 import { listAdminListings } from "@/lib/listings/queries";
 
 const CANCELLABLE = new Set(["draft", "pending_review", "upcoming", "live"]);
+const STATUS_RANK: Record<string, number> = {
+  pending_review: 0,
+  draft: 1,
+  upcoming: 2,
+  live: 3,
+};
 
 export default async function AdminPage() {
-  const listings = await listAdminListings();
+  const listings = [...(await listAdminListings())].sort((a, b) => {
+    const rank =
+      (STATUS_RANK[a.status] ?? 8) - (STATUS_RANK[b.status] ?? 8);
+    if (rank !== 0) return rank;
+    return b.created_at.localeCompare(a.created_at);
+  });
+  const pendingCount = listings.filter(
+    (listing) => listing.status === "pending_review",
+  ).length;
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-6 py-12">
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold">Admin</h1>
         <p className="text-sm text-zinc-500">
-          Cancel removes a lot from public browse. It does not delete bid
-          history. Hard-delete a draft with no bids from the Supabase table
-          editor if you truly need the row gone.
+          Sellers submit drafts for review. Approve puts the lot on the public
+          calendar. Send back returns it to a draft. Cancel removes it from
+          public browse without deleting bid history.
+        </p>
+        <p className="text-sm text-zinc-500">
+          {pendingCount === 0
+            ? "No listings waiting for review."
+            : `${pendingCount} waiting for review.`}
         </p>
       </div>
 
@@ -41,6 +61,14 @@ export default async function AdminPage() {
                 <Link href={`/auctions/${listing.slug}`} className="underline">
                   View
                 </Link>
+                {listing.status === "pending_review" ||
+                listing.status === "draft" ? (
+                  <AdminReviewActions
+                    listingId={listing.id}
+                    headline={listing.headline}
+                    status={listing.status}
+                  />
+                ) : null}
                 {CANCELLABLE.has(listing.status) ? (
                   <form action={cancelListing}>
                     <input type="hidden" name="id" value={listing.id} />

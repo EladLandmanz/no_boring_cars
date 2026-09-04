@@ -25,22 +25,30 @@ function isAuthorized(request: Request) {
   return timingSafeEqual(given, expected);
 }
 
-async function closeExpiredListings() {
+async function tickListings() {
   const supabase = createAdminClient();
-  const { data, error } = await supabase.rpc("close_expired_listings");
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  const opened = await supabase.rpc("open_due_listings");
+  if (opened.error) {
+    return NextResponse.json({ error: opened.error.message }, { status: 500 });
+  }
+
+  const closed = await supabase.rpc("close_expired_listings");
+  if (closed.error) {
+    return NextResponse.json({ error: closed.error.message }, { status: 500 });
   }
 
   revalidatePath("/");
   revalidatePath("/auctions");
-  return NextResponse.json({ closed: data ?? 0 });
+  return NextResponse.json({
+    opened: opened.data ?? 0,
+    closed: closed.data ?? 0,
+  });
 }
 
 export async function GET(request: Request) {
   if (!isAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  return closeExpiredListings();
+  return tickListings();
 }

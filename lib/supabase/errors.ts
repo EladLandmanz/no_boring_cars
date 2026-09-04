@@ -19,11 +19,15 @@ export function mapNbcError(message: string, hint?: string | null) {
     case "NBC_NOT_FOUND":
       return "Listing not found.";
     case "NBC_FORBIDDEN":
-      return "You cannot publish this listing.";
+      return "You cannot change this listing.";
     case "NBC_NOT_EDITABLE":
       return "This listing is no longer a draft.";
+    case "NBC_NOT_PENDING":
+      return "This listing is not waiting for review.";
+    case "NBC_NO_PHOTOS":
+      return "Add at least one photo first.";
     case "NBC_MISSING_WINDOW":
-      return "Set start and end times, save the draft, then publish.";
+      return "Set start and end times, save the draft, then submit for review.";
     case "NBC_BAD_WINDOW":
       return "End time must be after start time.";
     case "NBC_ALREADY_ENDED":
