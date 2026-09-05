@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BidPanel } from "@/components/auctions/bid-panel";
+import {
+  AuctionBidHistory,
+  AuctionLiveProvider,
+  AuctionPricePanel,
+} from "@/components/auctions/auction-live";
 import { ListingGallery } from "@/components/auctions/listing-gallery";
-import { ListingRealtime } from "@/components/auctions/listing-realtime";
 import { WatchButton } from "@/components/auctions/watch-button";
 import { getAuthContext } from "@/lib/auth/session";
 import { getListingBySlug, isListingWatched } from "@/lib/listings/queries";
-import { currentPriceAgorot, formatIls, minNextBidAgorot } from "@/lib/money";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -38,13 +40,17 @@ export default async function AuctionPage({ params }: Props) {
   const { user } = await getAuthContext();
   const watching = user ? await isListingWatched(listing.id) : false;
   const isOwner = user?.id === listing.seller_id;
-  const price =
-    listing.status === "sold" && listing.sold_price_agorot != null
-      ? listing.sold_price_agorot
-      : currentPriceAgorot(
-          listing.starting_bid_agorot,
-          listing.high_bid_agorot,
-        );
+  const liveInitial = {
+    status: listing.status,
+    starting_bid_agorot: listing.starting_bid_agorot,
+    bid_increment_agorot: listing.bid_increment_agorot,
+    reserve_agorot: listing.reserve_agorot,
+    ends_at: listing.ends_at,
+    starts_at: listing.starts_at,
+    sold_price_agorot: listing.sold_price_agorot,
+    high_bid_agorot: listing.high_bid_agorot,
+    bids: listing.bids,
+  };
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-6 py-12">
@@ -77,44 +83,13 @@ export default async function AuctionPage({ params }: Props) {
         )}
       </header>
 
-      <ListingRealtime
-        listingId={listing.id}
-        enabled={listing.status === "live" || listing.status === "upcoming"}
-      />
-
-      <section className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-        <p className="text-sm text-zinc-500">
-          {listing.status === "sold" ? "Sold for" : "Current price"}
-        </p>
-        <p className="text-3xl font-semibold">{formatIls(price)}</p>
-        <p className="mt-1 text-sm text-zinc-500">
-          Starting {formatIls(listing.starting_bid_agorot)} · increment{" "}
-          {formatIls(listing.bid_increment_agorot)}
-          {listing.reserve_agorot != null
-            ? ` · reserve ${formatIls(listing.reserve_agorot)}`
-            : " · no reserve"}
-        </p>
-        {listing.ends_at ? (
-          <p className="mt-2 text-sm text-zinc-500">
-            Ends {new Date(listing.ends_at).toLocaleString("en-IL")}
-          </p>
-        ) : null}
-        <BidPanel
-          key={`${listing.high_bid_agorot ?? 0}-${listing.ends_at ?? ""}`}
+      <AuctionLiveProvider listingId={listing.id} initial={liveInitial}>
+        <AuctionPricePanel
           listingId={listing.id}
           slug={listing.slug}
-          status={listing.status}
-          minNextAgorot={minNextBidAgorot(
-            listing.starting_bid_agorot,
-            listing.high_bid_agorot,
-            listing.bid_increment_agorot,
-          )}
-          endsAt={listing.ends_at}
-          startsAt={listing.starts_at}
           isOwner={isOwner}
           isLoggedIn={Boolean(user)}
         />
-      </section>
 
       <section>
         <h2 className="mb-3 text-lg font-semibold">The car</h2>
@@ -178,27 +153,8 @@ export default async function AuctionPage({ params }: Props) {
         </section>
       ) : null}
 
-      <section>
-        <h2 className="mb-2 text-lg font-semibold">Bid history</h2>
-        {listing.bids.length === 0 ? (
-          <p className="text-sm text-zinc-500">No bids yet.</p>
-        ) : (
-          <ul className="flex flex-col gap-2 text-sm">
-            {listing.bids.map((bid) => (
-              <li
-                key={bid.id}
-                className="flex justify-between border-b border-zinc-100 py-2 dark:border-zinc-800"
-              >
-                <span>@{bid.bidder?.username ?? "bidder"}</span>
-                <span>
-                  {formatIls(bid.amount_agorot)} ·{" "}
-                  {new Date(bid.created_at).toLocaleString("en-IL")}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+        <AuctionBidHistory />
+      </AuctionLiveProvider>
     </div>
   );
 }

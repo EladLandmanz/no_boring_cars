@@ -1,21 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
-import { placeBid } from "@/actions/bids";
+import { useActionState, useCallback } from "react";
+import { placeBid, type BidFormState } from "@/actions/bids";
 import { agorotToIlsInput } from "@/lib/listings/format";
 import { formatIls } from "@/lib/money";
-
-type BidPanelProps = {
-  listingId: string;
-  slug: string;
-  status: string;
-  minNextAgorot: number;
-  endsAt: string | null;
-  startsAt: string | null;
-  isOwner: boolean;
-  isLoggedIn: boolean;
-};
 
 export function BidPanel({
   listingId,
@@ -26,8 +15,29 @@ export function BidPanel({
   startsAt,
   isOwner,
   isLoggedIn,
-}: BidPanelProps) {
-  const [state, formAction, pending] = useActionState(placeBid, null);
+  onPlaced,
+}: {
+  listingId: string;
+  slug: string;
+  status: string;
+  minNextAgorot: number;
+  endsAt: string | null;
+  startsAt: string | null;
+  isOwner: boolean;
+  isLoggedIn: boolean;
+  onPlaced?: () => Promise<void>;
+}) {
+  const submitBid = useCallback(
+    async (prev: BidFormState, formData: FormData) => {
+      const result = await placeBid(prev, formData);
+      if (!result?.error) {
+        await onPlaced?.();
+      }
+      return result;
+    },
+    [onPlaced],
+  );
+  const [state, formAction, pending] = useActionState(submitBid, null);
   const next = `/auctions/${slug}`;
 
   if (status === "upcoming") {
