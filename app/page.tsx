@@ -13,8 +13,7 @@ export default async function HomePage() {
           No boring cars.
         </h1>
         <p className="max-w-xl text-zinc-600 dark:text-zinc-400">
-          Timed auctions for enthusiast and track cars in Israel. Bidding comes
-          in a later phase — for now you can browse live and past listings.
+          Timed auctions for enthusiast and track cars in Israel.
         </p>
       </section>
 
