@@ -9,6 +9,7 @@ import {
   listingImageExt,
   type ListingPhotoFile,
 } from "@/lib/listings/storage";
+import { notifyAdminsOfReview } from "@/lib/email/listings";
 import { mapNbcError } from "@/lib/supabase/errors";
 
 export type ListingFormState = { error: string } | null;
@@ -233,6 +234,19 @@ export async function submitListingForReview(
   revalidatePath("/account");
   revalidatePath("/admin");
   revalidatePath(`/sell/${id}`);
+
+  const { data: listing } = await supabase
+    .from("listings")
+    .select("id, slug, headline")
+    .eq("id", id)
+    .maybeSingle();
+  if (listing) {
+    try {
+      await notifyAdminsOfReview(listing);
+    } catch {
+      // Submit already succeeded; mail is best-effort.
+    }
+  }
   return null;
 }
 

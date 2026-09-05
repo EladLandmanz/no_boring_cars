@@ -2,6 +2,8 @@ import { timingSafeEqual } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getSiteOrigin } from "@/lib/app-url";
+import { notifySoldWinners } from "@/lib/email/listings";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -25,7 +27,7 @@ function isAuthorized(request: Request) {
   return timingSafeEqual(given, expected);
 }
 
-async function tickListings() {
+async function tickListings(request: Request) {
   const supabase = createAdminClient();
 
   const opened = await supabase.rpc("open_due_listings");
@@ -38,11 +40,14 @@ async function tickListings() {
     return NextResponse.json({ error: closed.error.message }, { status: 500 });
   }
 
+  const winners = await notifySoldWinners(getSiteOrigin(request));
+
   revalidatePath("/");
   revalidatePath("/auctions");
   return NextResponse.json({
     opened: opened.data ?? 0,
     closed: closed.data ?? 0,
+    winnerEmails: winners.sent,
   });
 }
 
@@ -50,5 +55,5 @@ export async function GET(request: Request) {
   if (!isAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  return tickListings();
+  return tickListings(request);
 }
