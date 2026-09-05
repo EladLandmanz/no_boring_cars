@@ -206,14 +206,14 @@ export function AuctionPricePanel({
   }, [price]);
 
   return (
-    <section className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+    <section className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
       <p className="text-sm text-zinc-500">
         {live.status === "sold" ? "Sold for" : "Current price"}
       </p>
         <p
           className={`text-3xl font-semibold transition-colors duration-700 ${
             priceFlash
-              ? "text-green-600 dark:text-green-400"
+              ? "text-live"
               : "text-zinc-900 dark:text-zinc-50"
           }`}
         >

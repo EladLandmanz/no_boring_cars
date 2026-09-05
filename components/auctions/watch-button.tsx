@@ -9,7 +9,11 @@ function WatchSubmit({ watching }: { watching: boolean }) {
     <button
       type="submit"
       disabled={pending}
-      className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm hover:border-zinc-500 disabled:opacity-60 dark:border-zinc-700"
+      className={
+        watching
+          ? "rounded-md border border-live bg-live px-3 py-1.5 text-sm font-medium text-white hover:bg-live-hover disabled:opacity-60"
+          : "rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm hover:border-live disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-950"
+      }
     >
       {pending ? "Saving…" : watching ? "Watching" : "Watch"}
     </button>

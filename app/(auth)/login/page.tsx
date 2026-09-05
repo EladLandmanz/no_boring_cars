@@ -22,7 +22,7 @@ export default async function LoginPage({
       <AuthForm action={signIn} submitLabel="Log in" next={next} />
       <p className="text-sm text-zinc-500">
         No account?{" "}
-        <Link href="/signup" className="underline">
+        <Link href="/signup" className="font-medium text-brand hover:underline">
           Sign up
         </Link>
       </p>

@@ -10,7 +10,7 @@ export default async function HomePage() {
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-6 py-12">
       <section className="flex flex-col gap-3">
         <h1 className="text-3xl font-semibold tracking-tight">
-          No boring cars.
+          No <span className="text-brand">boring</span> cars.
         </h1>
         <p className="max-w-xl text-zinc-600 dark:text-zinc-400">
           Timed auctions for enthusiast and track cars in Israel.
@@ -29,7 +29,7 @@ export default async function HomePage() {
         <>
           {live.length > 0 ? (
             <section className="flex flex-col gap-4">
-              <h2 className="text-xl font-semibold">Live now</h2>
+              <h2 className="text-xl font-semibold text-live">Live now</h2>
               <div className="grid gap-4 sm:grid-cols-2">
                 {live.map((listing) => (
                   <ListingCard key={listing.id} listing={listing} />

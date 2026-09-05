@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AdminReviewActions } from "@/components/admin/review-actions";
 import {
   AuctionBidHistory,
   AuctionLiveProvider,
@@ -37,9 +38,11 @@ export default async function AuctionPage({ params }: Props) {
     notFound();
   }
 
-  const { user } = await getAuthContext();
+  const { user, profile } = await getAuthContext();
   const watching = user ? await isListingWatched(listing.id) : false;
   const isOwner = user?.id === listing.seller_id;
+  const isAdmin = profile?.role === "admin";
+  const isPendingReview = listing.status === "pending_review";
   const liveInitial = {
     status: listing.status,
     starting_bid_agorot: listing.starting_bid_agorot,
@@ -54,8 +57,11 @@ export default async function AuctionPage({ params }: Props) {
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-6 py-12">
-      <Link href="/auctions" className="text-sm text-zinc-500 hover:underline">
-        ← All auctions
+      <Link
+        href={isAdmin && isPendingReview ? "/admin" : "/auctions"}
+        className="text-sm text-zinc-500 hover:underline"
+      >
+        {isAdmin && isPendingReview ? "← Admin" : "← All auctions"}
       </Link>
 
       <ListingGallery
@@ -64,7 +70,15 @@ export default async function AuctionPage({ params }: Props) {
       />
 
       <header className="flex flex-col gap-2">
-        <p className="text-xs uppercase tracking-wide text-zinc-500">
+        <p
+          className={`text-xs font-semibold uppercase tracking-wide ${
+            listing.status === "live"
+              ? "text-live"
+              : listing.status === "sold"
+                ? "text-brand"
+                : "text-zinc-500"
+          }`}
+        >
           {listing.status.replaceAll("_", " ")}
         </p>
         <h1 className="text-3xl font-semibold tracking-tight">
@@ -81,6 +95,16 @@ export default async function AuctionPage({ params }: Props) {
             watching={watching}
           />
         )}
+        {isAdmin && isPendingReview ? (
+          <div className="pt-2">
+            <AdminReviewActions
+              listingId={listing.id}
+              headline={listing.headline}
+              status={listing.status}
+              variant="button"
+            />
+          </div>
+        ) : null}
       </header>
 
       <AuctionLiveProvider listingId={listing.id} initial={liveInitial}>

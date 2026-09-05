@@ -20,6 +20,17 @@ function statusLabel(status: string) {
   }
 }
 
+function statusClass(status: string) {
+  switch (status) {
+    case "live":
+      return "text-live";
+    case "sold":
+      return "text-brand";
+    default:
+      return "text-zinc-500";
+  }
+}
+
 export function ListingCard({ listing }: { listing: ListingCardData }) {
   const price =
     listing.status === "sold" && listing.sold_price_agorot != null
@@ -39,7 +50,7 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
   return (
     <Link
       href={`/auctions/${listing.slug}`}
-      className="flex flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-500"
+      className="flex flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white hover:border-brand dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-brand"
     >
       <div className="relative flex aspect-[16/10] items-center justify-center bg-zinc-100 text-sm text-zinc-500 dark:bg-zinc-900">
         {listing.cover_url ? (
@@ -56,7 +67,9 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
         )}
       </div>
       <div className="flex flex-1 flex-col gap-2 p-4">
-        <p className="text-xs uppercase tracking-wide text-zinc-500">
+        <p
+          className={`text-xs font-semibold uppercase tracking-wide ${statusClass(listing.status)}`}
+        >
           {statusLabel(listing.status)}
         </p>
         <h2 className="text-base font-semibold leading-snug">

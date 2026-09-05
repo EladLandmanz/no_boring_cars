@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import type { ListingFormState } from "@/actions/listings";
 import { agorotToIlsInput } from "@/lib/listings/format";
 import type { ListingDraft } from "@/lib/listings/types";
+import { PhotoFileInput } from "@/components/sell/photo-file-input";
 
 const inputClass =
   "rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50";
@@ -370,13 +371,7 @@ export function ListingForm({
             Optional. JPEG, PNG, or WebP, up to 10 MB each. You can add more
             after the draft is created.
           </p>
-          <input
-            className="text-sm"
-            type="file"
-            name="photos"
-            accept="image/jpeg,image/png,image/webp"
-            multiple
-          />
+          <PhotoFileInput name="photos" multiple />
         </section>
       ) : null}
 
@@ -389,7 +384,7 @@ export function ListingForm({
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
+        className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-60"
       >
         {pending ? "Saving…" : submitLabel}
       </button>

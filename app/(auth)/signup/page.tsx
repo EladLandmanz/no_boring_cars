@@ -9,7 +9,7 @@ export default function SignupPage() {
       <AuthForm action={signUp} submitLabel="Sign up" />
       <p className="text-sm text-zinc-500">
         Already registered?{" "}
-        <Link href="/login" className="underline">
+        <Link href="/login" className="font-medium text-brand hover:underline">
           Log in
         </Link>
       </p>

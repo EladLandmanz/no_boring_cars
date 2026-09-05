@@ -8,8 +8,11 @@ export async function Header() {
   const unread = user ? await countUnreadNotifications() : 0;
 
   return (
-    <header className="flex items-center justify-between gap-4 border-b border-zinc-200 px-6 py-3 dark:border-zinc-800">
-      <Link href="/" className="text-sm font-semibold tracking-tight">
+    <header className="flex items-center justify-between gap-4 border-b-2 border-zinc-900 bg-white px-6 py-3 dark:border-zinc-100 dark:bg-zinc-950">
+      <Link
+        href="/"
+        className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-50"
+      >
         No Boring Cars
       </Link>
       <nav className="flex items-center gap-4 text-sm">
@@ -24,7 +27,10 @@ export async function Header() {
             <Link href="/account#watchlist" className="hover:underline">
               Watchlist
             </Link>
-            <Link href="/sell" className="hover:underline">
+            <Link
+              href="/sell"
+              className="rounded-md bg-zinc-900 px-3 py-1.5 font-medium text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            >
               Sell
             </Link>
             <Link href="/account" className="hover:underline">
@@ -48,7 +54,10 @@ export async function Header() {
             <Link href="/login" className="hover:underline">
               Log in
             </Link>
-            <Link href="/signup" className="hover:underline">
+            <Link
+              href="/signup"
+              className="rounded-md bg-zinc-900 px-3 py-1.5 font-medium text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            >
               Sign up
             </Link>
           </>

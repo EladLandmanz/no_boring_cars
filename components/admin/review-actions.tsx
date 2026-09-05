@@ -54,20 +54,31 @@ export function AdminReviewActions({
   listingId,
   headline,
   status,
+  variant = "link",
 }: {
   listingId: string;
   headline: string;
   status: string;
+  variant?: "link" | "button";
 }) {
+  const approveClass =
+    variant === "button"
+      ? "rounded-md bg-live px-3 py-1.5 text-sm font-medium text-white hover:bg-live-hover disabled:opacity-60"
+      : "text-sm text-live underline";
+  const rejectClass =
+    variant === "button"
+      ? "rounded-md border border-brand px-3 py-1.5 text-sm font-medium text-brand disabled:opacity-60"
+      : "text-sm text-brand underline";
+
   return (
-    <div className="flex items-start gap-3">
+    <div className="flex flex-wrap items-start gap-3">
       <ReviewForm
         listingId={listingId}
         action={approveListing}
         label="Approve"
         pendingLabel="Approving…"
         confirm={`Approve “${headline}” and put it on the public calendar?`}
-        className="text-sm underline"
+        className={approveClass}
       />
       {status === "pending_review" ? (
         <ReviewForm
@@ -76,7 +87,7 @@ export function AdminReviewActions({
           label="Send back"
           pendingLabel="Sending…"
           confirm={`Send “${headline}” back to a draft?`}
-          className="text-sm text-red-600 underline"
+          className={rejectClass}
         />
       ) : null}
     </div>

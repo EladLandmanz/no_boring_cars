@@ -27,8 +27,8 @@ export function BrowseFiltersBar({
               href={auctionsHref(filters, { status: option.value })}
               className={
                 active
-                  ? "rounded-full border border-zinc-900 bg-zinc-900 px-3 py-1 text-sm text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900"
-                  : "rounded-full border border-zinc-300 px-3 py-1 text-sm hover:border-zinc-500 dark:border-zinc-700"
+                  ? "rounded-full border border-brand bg-brand px-3 py-1 text-sm text-white"
+                  : "rounded-full border border-zinc-300 bg-white px-3 py-1 text-sm hover:border-brand dark:border-zinc-700 dark:bg-zinc-950"
               }
             >
               {option.label}
@@ -41,8 +41,8 @@ export function BrowseFiltersBar({
         href={auctionsHref(filters, { track: filters.track ? null : "1" })}
         className={
           filters.track
-            ? "rounded-full border border-zinc-900 bg-zinc-900 px-3 py-1 text-sm text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900"
-            : "rounded-full border border-zinc-300 px-3 py-1 text-sm hover:border-zinc-500 dark:border-zinc-700"
+            ? "rounded-full border border-live bg-live px-3 py-1 text-sm text-white"
+            : "rounded-full border border-zinc-300 bg-white px-3 py-1 text-sm hover:border-live dark:border-zinc-700 dark:bg-zinc-950"
         }
       >
         Track cars
