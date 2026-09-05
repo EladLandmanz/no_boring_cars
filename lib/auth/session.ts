@@ -27,9 +27,4 @@ export async function getAuthContext() {
   return { user, profile: profile as Profile | null, supabase };
 }
 
-/** Open redirects: only allow same-origin relative paths. */
-export function safeNextPath(value: unknown, fallback = "/") {
-  if (typeof value !== "string") return fallback;
-  if (!value.startsWith("/") || value.startsWith("//")) return fallback;
-  return value;
-}
+export { safeNextPath } from "@/lib/auth/safe-next-path";
