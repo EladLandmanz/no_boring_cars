@@ -57,8 +57,11 @@ export async function notifySoldWinners(siteOrigin: string) {
     .eq("status", "sold")
     .not("winner_id", "is", null);
 
-  if (error || !lots?.length) {
-    return { sent: 0, error: error?.message };
+  if (error) {
+    return { sent: 0, error: error.message };
+  }
+  if (!lots?.length) {
+    return { sent: 0 };
   }
 
   const origin = siteOrigin.replace(/\/$/, "");

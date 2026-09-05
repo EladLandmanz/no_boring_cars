@@ -62,7 +62,7 @@ export async function insertNotification(row: {
   const supabase = createAdminClient();
   const { error } = await supabase.from("notifications").insert(row);
   if (error && error.code !== "23505") {
-    throw new Error(error.message);
+    console.error("insertNotification", error.message);
   }
 }
 
@@ -78,7 +78,8 @@ export async function insertReviewNotifications(listing: {
     .eq("role", "admin");
 
   if (error) {
-    throw new Error(error.message);
+    console.error("insertReviewNotifications", error.message);
+    return;
   }
 
   for (const admin of admins ?? []) {
