@@ -1,5 +1,21 @@
 -- RLS is the firewall. Grants say which commands exist; policies say which rows.
 
+drop policy if exists "profiles_select_all" on public.profiles;
+drop policy if exists "profiles_update_own" on public.profiles;
+drop policy if exists "listings_select_public_or_own" on public.listings;
+drop policy if exists "listings_insert_own_draft" on public.listings;
+drop policy if exists "listings_update_own_editable" on public.listings;
+drop policy if exists "listings_update_admin" on public.listings;
+drop policy if exists "listings_delete_own_draft" on public.listings;
+drop policy if exists "listing_images_select" on public.listing_images;
+drop policy if exists "listing_images_write_owner" on public.listing_images;
+drop policy if exists "listing_modifications_select" on public.listing_modifications;
+drop policy if exists "listing_modifications_write_owner" on public.listing_modifications;
+drop policy if exists "bids_select" on public.bids;
+drop policy if exists "watches_select_own" on public.watches;
+drop policy if exists "watches_insert_own" on public.watches;
+drop policy if exists "watches_delete_own" on public.watches;
+
 alter table public.profiles enable row level security;
 alter table public.listings enable row level security;
 alter table public.listing_images enable row level security;

@@ -1,6 +1,6 @@
 -- Profiles hang off auth.users. We never store passwords here.
 
-create table public.profiles (
+create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   username text not null unique,
   display_name text,
@@ -17,6 +17,7 @@ create table public.profiles (
   )
 );
 
+drop trigger if exists profiles_set_updated_at on public.profiles;
 create trigger profiles_set_updated_at
   before update on public.profiles
   for each row execute function public.set_updated_at();
@@ -40,6 +41,7 @@ begin
 end;
 $$;
 
+drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
@@ -72,11 +74,12 @@ begin
 end;
 $$;
 
+drop trigger if exists profiles_guard on public.profiles;
 create trigger profiles_guard
   before update on public.profiles
   for each row execute function public.profiles_guard();
 
-create table public.listings (
+create table if not exists public.listings (
   id uuid primary key default gen_random_uuid(),
   seller_id uuid not null references public.profiles (id),
   status public.listing_status not null default 'draft',
@@ -130,26 +133,27 @@ create table public.listings (
   )
 );
 
+drop trigger if exists listings_set_updated_at on public.listings;
 create trigger listings_set_updated_at
   before update on public.listings
   for each row execute function public.set_updated_at();
 
-create index listings_status_ends_at_idx
+create index if not exists listings_status_ends_at_idx
   on public.listings (status, ends_at);
 
-create index listings_status_starts_at_idx
+create index if not exists listings_status_starts_at_idx
   on public.listings (status, starts_at);
 
-create index listings_seller_created_idx
+create index if not exists listings_seller_created_idx
   on public.listings (seller_id, created_at desc);
 
 -- Same VIN cannot be listed twice while it is an active or sold record.
-create unique index listings_vin_unique_active
+create unique index if not exists listings_vin_unique_active
   on public.listings (vin)
   where vin is not null
     and status not in ('cancelled', 'draft');
 
-create table public.listing_images (
+create table if not exists public.listing_images (
   id uuid primary key default gen_random_uuid(),
   listing_id uuid not null references public.listings (id) on delete cascade,
   storage_path text not null,
@@ -159,14 +163,14 @@ create table public.listing_images (
   created_at timestamptz not null default now()
 );
 
-create index listing_images_listing_idx
+create index if not exists listing_images_listing_idx
   on public.listing_images (listing_id, sort_order);
 
-create unique index listing_images_one_cover
+create unique index if not exists listing_images_one_cover
   on public.listing_images (listing_id)
   where is_cover;
 
-create table public.listing_modifications (
+create table if not exists public.listing_modifications (
   id uuid primary key default gen_random_uuid(),
   listing_id uuid not null references public.listings (id) on delete cascade,
   category text not null,
@@ -188,10 +192,10 @@ create table public.listing_modifications (
   )
 );
 
-create index listing_modifications_listing_idx
+create index if not exists listing_modifications_listing_idx
   on public.listing_modifications (listing_id, sort_order);
 
-create table public.bids (
+create table if not exists public.bids (
   id uuid primary key default gen_random_uuid(),
   listing_id uuid not null references public.listings (id),
   bidder_id uuid not null references public.profiles (id),
@@ -201,17 +205,17 @@ create table public.bids (
   constraint bids_amount_check check (amount_agorot > 0)
 );
 
-create index bids_listing_created_idx
+create index if not exists bids_listing_created_idx
   on public.bids (listing_id, created_at desc);
 
-create index bids_listing_amount_idx
+create index if not exists bids_listing_amount_idx
   on public.bids (listing_id, amount_agorot desc);
 
-create table public.watches (
+create table if not exists public.watches (
   user_id uuid not null references public.profiles (id) on delete cascade,
   listing_id uuid not null references public.listings (id) on delete cascade,
   created_at timestamptz not null default now(),
   primary key (user_id, listing_id)
 );
 
-create index watches_listing_idx on public.watches (listing_id);
+create index if not exists watches_listing_idx on public.watches (listing_id);

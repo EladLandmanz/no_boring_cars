@@ -20,6 +20,14 @@ values (
 )
 on conflict (id) do nothing;
 
+drop policy if exists "listing_images_select_visible" on storage.objects;
+drop policy if exists "listing_images_insert_owner" on storage.objects;
+drop policy if exists "listing_images_delete_owner" on storage.objects;
+drop policy if exists "avatars_select_all" on storage.objects;
+drop policy if exists "avatars_insert_own" on storage.objects;
+drop policy if exists "avatars_update_own" on storage.objects;
+drop policy if exists "avatars_delete_own" on storage.objects;
+
 -- Object names: listing-images/{listing_uuid}/{file}
 --               avatars/{user_uuid}/{file}
 
