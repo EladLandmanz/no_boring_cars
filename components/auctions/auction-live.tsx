@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -187,13 +188,37 @@ export function AuctionPricePanel({
     live.status === "sold" && live.sold_price_agorot != null
       ? live.sold_price_agorot
       : currentPriceAgorot(live.starting_bid_agorot, live.high_bid_agorot);
+  const [priceFlash, setPriceFlash] = useState(false);
+  const lastPrice = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (lastPrice.current === null) {
+      lastPrice.current = price;
+      return;
+    }
+    if (lastPrice.current === price) {
+      return;
+    }
+    lastPrice.current = price;
+    setPriceFlash(true);
+    const timeout = setTimeout(() => setPriceFlash(false), 650);
+    return () => clearTimeout(timeout);
+  }, [price]);
 
   return (
     <section className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
       <p className="text-sm text-zinc-500">
         {live.status === "sold" ? "Sold for" : "Current price"}
       </p>
-      <p className="text-3xl font-semibold">{formatIls(price)}</p>
+        <p
+          className={`text-3xl font-semibold transition-colors duration-700 ${
+            priceFlash
+              ? "text-green-600 dark:text-green-400"
+              : "text-zinc-900 dark:text-zinc-50"
+          }`}
+        >
+          {formatIls(price)}
+        </p>
       <p className="mt-1 text-sm text-zinc-500">
         Starting {formatIls(live.starting_bid_agorot)} · increment{" "}
         {formatIls(live.bid_increment_agorot)}
