@@ -130,7 +130,7 @@ export default async function AuctionPage({ params }: Props) {
           {spec("Model", listing.model)}
           {spec("Trim", listing.trim)}
           {spec("VIN", listing.vin)}
-          {spec("Mileage", `${listing.mileage.toLocaleString("en-IL")} mi`)}
+          {spec("Mileage", `${listing.mileage.toLocaleString("en-IL")} km`)}
           {spec("Drivetrain", listing.drivetrain.toUpperCase())}
           {spec("Transmission", listing.transmission)}
           {spec("Gears", listing.gears)}

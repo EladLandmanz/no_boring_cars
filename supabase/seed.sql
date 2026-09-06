@@ -80,7 +80,7 @@ begin
     'clean',
     true,
     'Suspension, brakes, and a roll bar. Street legal, track ready.',
-    'Timing belt and water pump at 138k miles.',
+    'Timing belt and water pump at 138k km.',
     true,
     'Tel Aviv',
     'Tel Aviv',

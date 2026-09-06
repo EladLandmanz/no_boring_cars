@@ -111,7 +111,7 @@ export function ListingForm({
           </label>
         </div>
         <label className="flex flex-col gap-1 text-sm">
-          Mileage (miles)
+          Mileage (km)
           <input
             className={inputClass}
             name="mileage"

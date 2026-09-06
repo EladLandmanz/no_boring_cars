@@ -73,7 +73,7 @@ export function parseListingForm(formData: FormData) {
     return { error: "Make and model are required." } as const;
   }
   if (mileage == null || mileage < 0) {
-    return { error: "Enter mileage in miles (0 or more)." } as const;
+    return { error: "Enter mileage in kilometers (0 or more)." } as const;
   }
   if (!DRIVETRAINS.includes(drivetrain as (typeof DRIVETRAINS)[number])) {
     return { error: "Pick a drivetrain." } as const;

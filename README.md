@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# No Boring Cars
 
-## Getting Started
+Timed auctions for enthusiast and track cars in Israel.
 
-First, run the development server:
+- **Live:** https://no-boring-cars.vercel.app
+- **Repo:** https://github.com/EladLandmanz/no_boring_cars
+- **Docs:** [Product](docs/01-product.md) · [Technical](docs/02-technical.md) · [Tests](docs/03-tests.md) · [Scale](docs/04-scale.md) · [Security](docs/05-security.md) · [Presentation](docs/06-presentation.md)
+
+Stack: Next.js 16 (App Router), TypeScript, Tailwind 4, Supabase (Auth, Postgres, Storage), Vercel, optional Resend.
+
+## Run locally
+
+Needs Node.js 20+ and **pnpm**.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/EladLandmanz/no_boring_cars.git
+cd no_boring_cars
+pnpm install
+cp .env.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Fill `.env.local` (see below). Apply `supabase/migrations/` to your Supabase project in timestamp order (SQL Editor or CLI). Sign up once in the app, then you can run `supabase/seed.sql` for demo lots.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+pnpm dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open http://localhost:3000.
 
-## Learn More
+```bash
+pnpm test          # Vitest + Testing Library
+pnpm test:e2e      # Playwright (install browsers once: pnpm exec playwright install chromium)
+```
 
-To learn more about Next.js, take a look at the following resources:
+Promote an admin in the Supabase SQL Editor:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```sql
+update public.profiles set role = 'admin' where username = 'your_username';
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Hobby Vercel cron runs `/api/cron/close-listings` once daily. For frequent ticks locally, send `GET` or `POST` with `Authorization: Bearer <CRON_SECRET>`.
 
-## Deploy on Vercel
+## Environment variables
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Copy names from `.env.example`. Never commit real keys.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Variable | Where | Purpose |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Client + server | Project URL (origin only) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Client + server | Anon key; RLS still applies |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server only | Cron, some emails/alerts |
+| `CRON_SECRET` | Server only | Bearer token for `/api/cron/close-listings` |
+| `NEXT_PUBLIC_SITE_URL` | Server | Canonical origin for email links (e.g. `https://no-boring-cars.vercel.app`) |
+| `RESEND_API_KEY` | Server | Optional; skip mail if empty |
+| `EMAIL_FROM` | Server | From header |
+| `EMAIL_ADMIN_TO` | Server | Review notification inbox |
+
+On Vercel, set the same variables for **Production** (and Preview if you use git preview URLs).

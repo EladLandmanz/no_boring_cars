@@ -76,7 +76,7 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
           {listing.headline}
         </h2>
         <p className="text-sm text-zinc-500">
-          {listing.mileage.toLocaleString("en-IL")} mi · {listing.location_city}
+          {listing.mileage.toLocaleString("en-IL")} km · {listing.location_city}
           , {listing.location_region}
         </p>
         <p className="mt-auto pt-2 text-lg font-medium">{formatIls(price)}</p>
