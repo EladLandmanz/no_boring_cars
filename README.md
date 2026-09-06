@@ -1,6 +1,10 @@
+# project by:
+Elad Landman 208001503 
+Loren Tevel 209362128
 # No Boring Cars
 
 Timed auctions for enthusiast and track cars in Israel.
+
 
 - **Live:** https://no-boring-cars.vercel.app
 - **Repo:** https://github.com/EladLandmanz/no_boring_cars
